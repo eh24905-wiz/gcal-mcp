@@ -3,11 +3,15 @@ import { OAuth2Client, Credentials } from 'google-auth-library';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as http from 'http';
-import { URL } from 'url';
+import { URL, fileURLToPath } from 'url';
 
 const SCOPES = ['https://www.googleapis.com/auth/calendar.readonly'];
-const TOKEN_PATH = path.join(process.cwd(), 'token.json');
-const CREDENTIALS_GLOB = 'client_secret*.json';
+
+// Use the directory where this script lives, not process.cwd()
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const PROJECT_DIR = path.resolve(__dirname, '..');
+
+const TOKEN_PATH = path.join(PROJECT_DIR, 'token.json');
 
 interface ClientCredentials {
   installed: {
@@ -18,12 +22,12 @@ interface ClientCredentials {
 }
 
 async function findCredentialsFile(): Promise<string> {
-  const files = await fs.readdir(process.cwd());
+  const files = await fs.readdir(PROJECT_DIR);
   const credFile = files.find(f => f.startsWith('client_secret') && f.endsWith('.json'));
   if (!credFile) {
-    throw new Error('No credentials file found. Please place your client_secret*.json file in the current directory.');
+    throw new Error(`No credentials file found. Please place your client_secret*.json file in ${PROJECT_DIR}`);
   }
-  return path.join(process.cwd(), credFile);
+  return path.join(PROJECT_DIR, credFile);
 }
 
 async function loadCredentials(): Promise<ClientCredentials> {
